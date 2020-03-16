@@ -2,15 +2,14 @@
 
 namespace App\Model;
 
-class SimpleModel
+interface SimpleModel
 {
 
     /**
-     * @return SimpleModel
+     * Заполняет модель свойствами
+     * @param array $data
+     * @return $this
      */
-    public static function create()
-    {
-        return new self();
-    }
+    public function fill(array $data);
 
 }

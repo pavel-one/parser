@@ -2,12 +2,29 @@
 
 namespace App\Model\Category;
 
-use App\Model\SimpleModel;
+use App\Model\SimpleObject;
 
-class Category extends SimpleModel {
+/**
+ * Class Category
+ * @property string $link
+ * @property string $uri
+ * @property string $name
+ * @property string $image
+ * @package App\Model\Category
+ */
+class Category extends SimpleObject
+{
+    protected $properties = [
+        'link',
+        'uri',
+        'name',
+        'image',
+        'id',
+        'inner'
+    ];
 
-    public function __construct()
+    public function saveImage()
     {
-        echo 'test';
+
     }
 }

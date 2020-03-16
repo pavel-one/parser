@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Model\Category\Category;
 use App\Model\SimpleModel;
 use DiDom\Document;
 use Monolog\Handler\StreamHandler;
@@ -12,7 +13,7 @@ use Monolog\Logger;
  * @property Logger $log
  * @package App
  */
-class Parser extends SimpleModel
+class Parser
 {
     public $links = [
         'https://split-ovk.com/konditsionirovanie',
@@ -78,14 +79,20 @@ class Parser extends SimpleModel
         $elements = $document->find('.category-sections .board-nav__item-2');
 
         foreach ($elements as $element) {
-            $this->result[$name][] = [
+            $categoryData = [
                 'link' => $link,
                 'uri' => str_replace('https://split-ovk.com', '', $link),
                 'name' => trim($element->first('.catalog-section__caption')->text()),
                 'image' => str_replace(['background-image:url(', ')'],
                     '',
-                    $element->first('.catalog-section__image')->attr('style'))
+                    $element->first('.catalog-section__image')->attr('style')),
             ];
+
+            $category = new Category($categoryData);
+
+            $this->log->info($category);
+
+            $this->result[$name][] = $category;
         }
     }
 
