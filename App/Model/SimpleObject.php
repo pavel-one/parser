@@ -20,7 +20,7 @@ class SimpleObject implements SimpleModel
             $this->$var = null;
         }
 
-        $this->base_path = dirname(__DIR__, 3) . '/';
+        $this->base_path = dirname(__DIR__, 2) . '/';
 
         if (count($data)) {
             $this->fill($data);
