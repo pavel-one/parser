@@ -2,6 +2,7 @@
 
 namespace App\Model;
 
+use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 
@@ -28,7 +29,14 @@ class SimpleObject implements SimpleModel
 
         $this->log = new Logger('Parser');
         $classname = (new \ReflectionClass($this))->getShortName();
-        $this->log->pushHandler(new StreamHandler($this->base_path . 'logs/parser/' . $classname . '.log', Logger::INFO));
+        $stream = new StreamHandler(
+            $this->base_path . 'logs/parser/' . $classname . '.log',
+            Logger::INFO
+        );
+        $stream->setFormatter(new LineFormatter(LineFormatter::SIMPLE_FORMAT, 'H:i:s d.m.Y'));
+        $this->log->pushHandler(
+            $stream
+        );
     }
 
     /**
