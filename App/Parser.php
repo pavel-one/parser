@@ -34,15 +34,19 @@ class Parser
 
     public $base_path;
     public $log;
+    public $debug;
 
     /**
      * @param string $logName
+     * @param bool $debug
      * @param array $links
      * @return SimpleModel|Parser
      */
-    public static function create(string $logName = 'log.log', array $links = [])
+    public static function create(string $logName = 'log.log', $debug = false, array $links = [])
     {
         $obj = new self();
+
+        $obj->debug = $debug;
 
         if (count($links)) {
             $obj->links = $links;
@@ -56,21 +60,46 @@ class Parser
     }
 
     /**
-     * @param bool $product
      * @return Parser
+     * @throws \DiDom\Exceptions\InvalidSelectorException
      */
-    public function process($product = false): Parser
+    public function process(): Parser
     {
-        foreach ($this->links as $link) {
-            if (!$product) {
+        if (!$this->debug) {
+            foreach ($this->links as $link) {
                 $this->parseCategory($link);
             }
+        } else {
+            $this->parseCategory($this->links[0]);
+            $this->prepare();
         }
 
         return $this;
     }
 
-    protected function parseCategory($link)
+    public function prepare()
+    {
+        foreach ($this->result as $category) {
+
+            foreach ($category as $item) {
+
+                if ($item instanceof Category) {
+                    $item->saveImage();
+                    $item->preparePage();
+                    $item->getProductsLinks();
+                }
+
+            }
+
+        }
+    }
+
+    /**
+     * Парсит категорию
+     * @param string $link
+     * @throws \DiDom\Exceptions\InvalidSelectorException
+     */
+    protected function parseCategory(string $link)
     {
         $document = new Document($link, true);
         $name = $document
@@ -79,9 +108,10 @@ class Parser
         $elements = $document->find('.category-sections .board-nav__item-2');
 
         foreach ($elements as $element) {
+            $href = $element->first('a')->attr('href');
             $categoryData = [
-                'link' => $link,
-                'uri' => str_replace('https://split-ovk.com', '', $link),
+                'link' => trim($href),
+                'uri' => str_replace('https://split-ovk.com', '', $href),
                 'name' => trim($element->first('.catalog-section__caption')->text()),
                 'image' => str_replace(['background-image:url(', ')'],
                     '',
@@ -89,8 +119,6 @@ class Parser
             ];
 
             $category = new Category($categoryData);
-
-            $this->log->info($category);
 
             $this->result[$name][] = $category;
         }

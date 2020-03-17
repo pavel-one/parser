@@ -2,3 +2,5 @@
 composer.phar
 /vendor/
 /logs/
+/files/
+!/files/empty.txt

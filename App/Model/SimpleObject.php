@@ -2,8 +2,14 @@
 
 namespace App\Model;
 
+use Monolog\Handler\StreamHandler;
+use Monolog\Logger;
+
 class SimpleObject implements SimpleModel
 {
+    protected $log;
+    protected $base_path;
+
     protected $attributes = [];
 
     protected $properties = [];
@@ -14,9 +20,15 @@ class SimpleObject implements SimpleModel
             $this->$var = null;
         }
 
+        $this->base_path = dirname(__DIR__, 3) . '/';
+
         if (count($data)) {
             $this->fill($data);
         }
+
+        $this->log = new Logger('Parser');
+        $classname = (new \ReflectionClass($this))->getShortName();
+        $this->log->pushHandler(new StreamHandler($this->base_path . 'logs/parser/' . $classname, Logger::INFO));
     }
 
     /**
