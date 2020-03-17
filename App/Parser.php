@@ -5,6 +5,7 @@ namespace App;
 use App\Model\Category\Category;
 use App\Model\SimpleModel;
 use DiDom\Document;
+use DiDom\Exceptions\InvalidSelectorException;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
 
@@ -61,11 +62,13 @@ class Parser
 
     /**
      * @return Parser
-     * @throws \DiDom\Exceptions\InvalidSelectorException
+     * @throws InvalidSelectorException
      */
     public function process(): Parser
     {
         if (!$this->debug) {
+            $this->error('Включен режим дебага');
+
             foreach ($this->links as $link) {
                 $this->parseCategory($link);
             }
@@ -79,9 +82,13 @@ class Parser
 
     public function prepare()
     {
+        $this->log('Начинаю подготовку заполнение категорий');
+
         foreach ($this->result as $category) {
 
+            /** @var Category $item */
             foreach ($category as $item) {
+                $this->log('Идет заполнение категории', $item->toArray());
 
                 if ($item instanceof Category) {
                     $item->saveImage();
@@ -97,10 +104,12 @@ class Parser
     /**
      * Парсит категорию
      * @param string $link
-     * @throws \DiDom\Exceptions\InvalidSelectorException
+     * @throws InvalidSelectorException
      */
     protected function parseCategory(string $link)
     {
+        $this->log("Начинаю парсинг категории $link");
+
         $document = new Document($link, true);
         $name = $document
             ->first('.breadcrumbs__item.hidden-xs.hidden-sm')
@@ -131,17 +140,31 @@ class Parser
 
     /**
      * @param string|array $msg
+     * @param array $data
      * @return Parser
      */
-    public function log($msg = ''): Parser
+    public function log($msg = '', array $data = []): Parser
     {
 
         if (is_array($msg)) {
-            $msg = print_r($msg, true);
+            $msg = json_encode($msg);
         }
 
 
-        $this->log->info($msg);
+        $this->log->info($msg, array_merge($data, $this->result));
+
+        return $this;
+    }
+
+    public function error($msg = '', array $data = []): Parser
+    {
+
+        if (is_array($msg)) {
+            $msg = json_encode($msg);
+        }
+
+
+        $this->log->error($msg, $data);
 
         return $this;
     }

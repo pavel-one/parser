@@ -14,13 +14,12 @@ ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 
 
-$categoryParser = Parser::create('category.log', true);
+$categoryParser = Parser::create('CategoryParser.log', true);
 
 $categoryParser = $categoryParser
-    ->log('Начинаю парсинг категорий')
     ->process()
-    ->getResult()
 ;
 
+$categoryParser->log('Окончание парсинга');
 
-dd($categoryParser);
+dd($categoryParser->getResult());

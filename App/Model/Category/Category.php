@@ -4,7 +4,6 @@ namespace App\Model\Category;
 
 use App\Model\Product\Product;
 use App\Model\SimpleObject;
-use App\Parser;
 use DiDom\Document;
 
 /**
@@ -63,7 +62,8 @@ class Category extends SimpleObject
 
     }
 
-    public function prepareDocument() {
+    public function prepareDocument()
+    {
         $this->dom = new Document($this->link, true);
     }
 
@@ -72,12 +72,16 @@ class Category extends SimpleObject
         if (!$this->dom instanceof Document) {
             $this->prepareDocument();
         }
+        $this->log->info('Начинаю поиск максимального количества страниц в категории', ['link' => $this->link]);
 
         $paginators = $this->dom->find('.content__pagination .paginator__item');
 
         if (!count($paginators)) {
+            $this->log->error('Пагинация не найдена, ставлю значения по умолчанию', ['link' => $this->link]);
+
             $this->product_links = [
                 'page' => [
+                    'currentPage' => 1,
                     'min' => 1,
                     'max' => 1
                 ]
@@ -89,24 +93,59 @@ class Category extends SimpleObject
         $lastText = $last->text();
 
         if (!$lastText) {
+            $this->log->error('Окончательная стрница не найдена, сдвигаю', ['link' => $this->link]);
             $last = $paginators[count($paginators) - 2];
         }
 
         $this->product_links = [
             'page' => [
-                'min' => $this->dom->first('.paginator__item--active')->text(),
-                'max' => str_replace('... ', '', trim($last->text()))
+                'currentPage' => 1,
+                'min' => (int)$this->dom->first('.paginator__item--active')->text(),
+                'max' => (int)str_replace('... ', '', trim($last->text()))
             ]
         ];
+
+        $this->log->info(
+            'Найдены максимальные и минимальные значения',
+            array_merge(['link' => $this->link], $this->product_links)
+        );
 
         return $this;
     }
 
-    public function getProductsLinks() {
+    public function getProductsLinks()
+    {
         if (!$this->dom instanceof Document) {
             $this->prepareDocument();
         }
 
+        $this->log->info("Начинаю парсить", ['link' => $this->link]);
 
+        $productsDOM = $this->dom->find('.products-wrapper .hits-item');
+
+        if (!count($productsDOM)) {
+            $this->log->error('Не найдены продукты', ['link' => $this->link]);
+            return false;
+        }
+
+        foreach ($productsDOM as $productDOM) {
+            $this->product_links['links'][] = $productDOM->first('.product-cut__title-link')
+                ->attr('href');
+        }
+
+        if ($this->product_links['page']['currentPage'] === $this->product_links['page']['max']) {
+            $this->log->error('Парсинг текущей категории окончен', ['link' => $this->link]);
+            return true;
+        }
+
+        $this->product_links['page']['currentPage'] = $this->product_links['page']['currentPage'] + 1;
+
+        $per_page = $this->product_links['page']['currentPage'] * 12 - 12;
+        $this->link = $this->attributes['link'] . '?per_page=' . $per_page;
+        $this->prepareDocument();
+
+        $this->getProductsLinks();
+
+        return true;
     }
 }

@@ -28,7 +28,7 @@ class SimpleObject implements SimpleModel
 
         $this->log = new Logger('Parser');
         $classname = (new \ReflectionClass($this))->getShortName();
-        $this->log->pushHandler(new StreamHandler($this->base_path . 'logs/parser/' . $classname, Logger::INFO));
+        $this->log->pushHandler(new StreamHandler($this->base_path . 'logs/parser/' . $classname . '.log', Logger::INFO));
     }
 
     /**
@@ -56,6 +56,6 @@ class SimpleObject implements SimpleModel
      */
     public function toArray()
     {
-
+        return (array)$this;
     }
 }
