@@ -88,7 +88,10 @@ class Parser
 
             /** @var Category $item */
             foreach ($category as $item) {
-                $this->log('Идет заполнение категории', $item->toArray());
+                $this->log('Идет заполнение категории', [
+                    'name' => $item->name,
+                    'link' => $item->link
+                ]);
 
                 if ($item instanceof Category) {
                     $item->saveImage();
@@ -151,7 +154,7 @@ class Parser
         }
 
 
-        $this->log->info($msg, array_merge($data, $this->result));
+        $this->log->info($msg, $data);
 
         return $this;
     }
