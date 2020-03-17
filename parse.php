@@ -20,6 +20,6 @@ $categoryParser = $categoryParser
     ->process()
 ;
 
-$categoryParser->log('Окончание парсинга');
+$categoryParser->log('Окончание парсинга', $categoryParser->getResult());
 
 dd($categoryParser->getResult());
