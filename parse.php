@@ -1,18 +1,20 @@
 <?php
 
+use App\Components\Database\Database;
 use App\Parser;
 
-//define('MODX_API_MODE', true);
-//require_once dirname(__DIR__, 3) . '/index.php';
-//$modx->getService('error','error.modError');
-//$modx->setLogLevel(modX::LOG_LEVEL_ERROR);
-//$modx->setLogTarget('FILE');
+define('MODX_API_MODE', true);
+require_once dirname(__DIR__, 3) . '/index.php';
+$modx->getService('error','error.modError');
+$modx->setLogLevel(modX::LOG_LEVEL_ERROR);
+$modx->setLogTarget('FILE');
 include_once 'vendor/autoload.php';
 
 ini_set('error_reporting', E_ALL);
 ini_set('display_errors', 1);
 ini_set('display_startup_errors', 1);
 
+dd(new Database());
 
 $categoryParser = Parser::create('CategoryParser.log', true);
 

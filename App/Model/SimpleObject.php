@@ -59,10 +59,15 @@ class SimpleObject implements SimpleModel
         return $this;
     }
 
+    public function save(): SimpleObject
+    {
+        return $this;
+    }
+
     /**
-     * TODO: Сделать
+     * @return array
      */
-    public function toArray()
+    public function toArray(): array
     {
         return (array)$this;
     }

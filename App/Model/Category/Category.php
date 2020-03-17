@@ -14,8 +14,10 @@ use DiDom\Document;
  * @property string $name
  * @property string $image
  * @property string $real_image
+ * @property string $parent_name
  * @property array $product_links
  * @property int $id
+ * @property int $parent
  * @property Product[] $inner
  * @property Document $dom
  *
@@ -30,6 +32,8 @@ class Category extends SimpleObject
         'image',
         'real_image',
         'id',
+        'parent',
+        'parent_name',
         'product_links',
         'inner',
         'dom'
@@ -53,7 +57,7 @@ class Category extends SimpleObject
         return $this;
     }
 
-    public function parseProduct()
+    public function parseProduct(): void
     {
         if (!$this->dom instanceof Document) {
             $this->prepareDocument();
@@ -62,7 +66,7 @@ class Category extends SimpleObject
 
     }
 
-    public function prepareDocument()
+    public function prepareDocument(): void
     {
         $this->dom = new Document($this->link, true);
     }
@@ -113,13 +117,25 @@ class Category extends SimpleObject
         return $this;
     }
 
-    public function getProductsLinks()
+    /**
+     * Устанавливает имя категории
+     * @param string $name
+     * @return Category
+     */
+    public function setParentName(string $name): Category
+    {
+        $this->parent_name = $name;
+
+        return $this;
+    }
+
+    public function getProductsLinks(): bool
     {
         if (!$this->dom instanceof Document) {
             $this->prepareDocument();
         }
 
-        $this->log->info("Начинаю парсить", ['link' => $this->link]);
+        $this->log->info('Начинаю парсить', ['link' => $this->link]);
 
         $productsDOM = $this->dom->find('.products-wrapper .hits-item');
 
@@ -138,7 +154,7 @@ class Category extends SimpleObject
             return true;
         }
 
-        $this->product_links['page']['currentPage'] = $this->product_links['page']['currentPage'] + 1;
+        $this->product_links['page']['currentPage'] += 1;
 
         $per_page = $this->product_links['page']['currentPage'] * 12 - 12;
         $this->link = $this->attributes['link'] . '?per_page=' . $per_page;
@@ -147,5 +163,50 @@ class Category extends SimpleObject
         $this->getProductsLinks();
 
         return true;
+    }
+
+    public function beforeSave(int &$parent): bool
+    {
+
+    }
+
+    public function save(int $parent = 5): SimpleObject
+    {
+        if (!$this->beforeSave($parent)) { //TODO: Проверка существует ли такой
+            return $this;
+        }
+
+        $data = [
+            'pagetitle' => $this->name,
+            'alias' => str_replace('/', '', $this->uri),
+            'parent' => '?',
+            'uri' => str_replace('/', '', $this->uri),
+        ];
+        $defaultData = [
+            'type' => 'document',
+            'contentType' => 'text/html',
+            'description' => '',
+            'alias_visible' => 1,
+            'published' => 1,
+            'isfolder' => 1, //TODO: Change
+            'richtext' => 1,
+            'template' => 3, //TODO: Change
+            'searchable' => 1,
+            'cacheable' => 1,
+            'createdby' => 1,
+            'createdon' => time(),
+            'editedby' => 1,
+            'editedon' => time(),
+            'publishedon' => time(),
+            'publishedby' => 1,
+            'class_key' => 'msCategory', //TODO: Change
+            'context_key' => 'web',
+            'content_type' => 1,
+            'uri_override' => 1, //TODO: Change
+            'hide_children_in_tree' => 0,
+            'show_in_tree' => 1,
+        ];
+
+        return $this;
     }
 }

@@ -84,7 +84,7 @@ class Parser
     {
         $this->log('Начинаю подготовку заполнение категорий');
 
-        foreach ($this->result as $category) {
+        foreach ($this->result as $key => $category) {
 
             /** @var Category $item */
             foreach ($category as $item) {
@@ -94,9 +94,11 @@ class Parser
                 ]);
 
                 if ($item instanceof Category) {
+                    $item->setParentName($key);
                     $item->saveImage();
                     $item->preparePage();
                     $item->getProductsLinks();
+                    $item->save();
                 }
 
             }
