@@ -2,6 +2,7 @@
 
 namespace App\Model;
 
+use modX;
 use Monolog\Formatter\LineFormatter;
 use Monolog\Handler\StreamHandler;
 use Monolog\Logger;
@@ -10,13 +11,14 @@ class SimpleObject implements SimpleModel
 {
     protected $log;
     protected $base_path;
-
     protected $attributes = [];
-
     protected $properties = [];
+    /** @var modX $modx */
+    protected $modx;
 
-    public function __construct(array $data = [])
+    public function __construct(modX $modx, array $data = [])
     {
+        $this->modx = $modx;
         foreach ($this->properties as $var) {
             $this->$var = null;
         }

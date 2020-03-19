@@ -5,6 +5,7 @@ namespace App\Model\Category;
 use App\Model\Product\Product;
 use App\Model\SimpleObject;
 use DiDom\Document;
+use msCategory;
 
 /**
  * Class Category
@@ -165,21 +166,80 @@ class Category extends SimpleObject
         return true;
     }
 
+    /**
+     * Модифицирует parent
+     * @param int $parent
+     * @return bool
+     */
     public function beforeSave(int &$parent): bool
     {
+        $parentName = $this->parent_name;
+        $this->log->info("Проверяю наличие категории [$parentName] в $parent");
+
+        /** @var msCategory|null $obj */
+        $obj = $this->modx->getObject('msCategory', [
+            'parent' => $parent,
+            'pagetitle' => $parentName
+        ]);
+
+        if ($obj instanceof msCategory) {
+            $this->log->info('Категория найдена, parent изменен на ' . $obj->id);
+            $parent = $obj->id;
+
+            //Проверка внутренней категории
+            $obj = $this->modx->getObject('msCategory', [
+                'parent' => $parent,
+                'pagetitle' => $this->name
+            ]);
+
+            if ($obj instanceof msCategory) {
+                $this->log->error('Внутренняя категория уже есть, прерываю save', ['name' => $this->name]);
+                $this->id = $obj->id;
+                return false;
+            }
+
+            return true;
+        }
+
+        $data = [
+            'pagetitle' => $this->parent_name,
+            'class_key' => 'msCategory',
+            'alias' => rand(0, 2000000),
+            'published' => 1,
+            'template' => 3,
+            'isfolder' => 1,
+            'parent' => $parent
+        ];
+
+        $obj = $this->modx->newObject('msCategory', $data);
+        $this->log->info("Начинаю создание новой категории [$parent]");
+
+        if (!$obj->save()) {
+            $this->log->error("Не получилось создать категорию [$parent]", $data);
+            return false;
+        }
+
+        $parent = $obj->id;
+        $this->log->info('Категория создана, parent изменен на ' . $obj->id);
+
+        return true;
 
     }
 
     public function save(int $parent = 5): SimpleObject
     {
-        if (!$this->beforeSave($parent)) { //TODO: Проверка существует ли такой
+        $this->log->info('Начинаю сохранение категории в БД');
+
+        if (!$this->beforeSave($parent)) {
+            $this->log->error('Выход beforeSave');
             return $this;
         }
+        $this->parent = $parent;
 
         $data = [
             'pagetitle' => $this->name,
             'alias' => str_replace('/', '', $this->uri),
-            'parent' => '?',
+            'parent' => $parent,
             'uri' => str_replace('/', '', $this->uri),
         ];
         $defaultData = [
@@ -206,6 +266,19 @@ class Category extends SimpleObject
             'hide_children_in_tree' => 0,
             'show_in_tree' => 1,
         ];
+
+        /** @var msCategory $newObject */
+        $newObject = $this->modx->newObject('msCategory', array_merge($defaultData, $data));
+
+        if (!$newObject->save()) {
+            $this->log->error('Не создана категория ', $this->toArray());
+        }
+
+        $this->log->info('Создана новая категория '.$this->name);
+        $this->id = $newObject->id;
+
+        $newObject->setTVValue('catImg', str_replace(MODX_BASE_PATH, '', $this->real_image));
+        $newObject->save();
 
         return $this;
     }

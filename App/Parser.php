@@ -67,12 +67,13 @@ class Parser
     public function process(): Parser
     {
         if (!$this->debug) {
-            $this->error('Включен режим дебага');
-
             foreach ($this->links as $link) {
+                $this->log('Ссылка ' . $link);
                 $this->parseCategory($link);
+                $this->prepare();
             }
         } else {
+            $this->error('Включен режим дебага');
             $this->parseCategory($this->links[0]);
             $this->prepare();
         }
@@ -111,8 +112,10 @@ class Parser
      * @param string $link
      * @throws InvalidSelectorException
      */
-    protected function parseCategory(string $link)
+    protected function parseCategory(string $link): void
     {
+        global $modx;
+
         $this->log("Начинаю парсинг категории $link");
 
         $document = new Document($link, true);
@@ -132,7 +135,7 @@ class Parser
                     $element->first('.catalog-section__image')->attr('style')),
             ];
 
-            $category = new Category($categoryData);
+            $category = new Category($modx, $categoryData);
 
             $this->result[$name][] = $category;
         }
