@@ -40,6 +40,42 @@ class Category extends SimpleObject
         'dom'
     ];
 
+    /**
+     * Парсит один продукт
+     * @param string $link
+     * @return Category
+     * @throws \DiDom\Exceptions\InvalidSelectorException
+     */
+    public function parseProduct(string $link): Category
+    {
+        $data = [
+            'dom' => new Document($link, true),
+            'link' => $link,
+            'uri' => str_replace('https://split-ovk.com/', '', $link),
+            'category' => $this,
+            'modx' => $this->modx
+        ];
+
+        $product = new Product($this->modx, $data);
+
+        $this->inner[] = $product->parse();
+
+        return $this;
+    }
+
+    /**
+     * Запускает парсинг продуктов
+     * @throws \DiDom\Exceptions\InvalidSelectorException
+     */
+    public function parseProducts(): void
+    {
+        $this->log->info('Запускаю парсинг продуктов');
+        foreach ($this->product_links['links'] as $link) {
+            $this->log->info('Парсю ', ['link' => $link]);
+            $this->parseProduct($link);
+        }
+    }
+
     public function saveImage()
     {
 
@@ -56,15 +92,6 @@ class Category extends SimpleObject
         $this->real_image = $path;
 
         return $this;
-    }
-
-    public function parseProduct(): void
-    {
-        if (!$this->dom instanceof Document) {
-            $this->prepareDocument();
-        }
-
-
     }
 
     public function prepareDocument(): void
@@ -274,7 +301,7 @@ class Category extends SimpleObject
             $this->log->error('Не создана категория ', $this->toArray());
         }
 
-        $this->log->info('Создана новая категория '.$this->name);
+        $this->log->info('Создана новая категория ' . $this->name);
         $this->id = $newObject->id;
 
         $newObject->setTVValue('catImg', str_replace(MODX_BASE_PATH, '', $this->real_image));

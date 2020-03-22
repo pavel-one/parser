@@ -81,7 +81,7 @@ class Parser
         return $this;
     }
 
-    public function prepare()
+    public function prepare(): void
     {
         $this->log('Начинаю подготовку заполнение категорий');
 
@@ -100,6 +100,7 @@ class Parser
                     $item->preparePage();
                     $item->getProductsLinks();
                     $item->save();
+                    $item->parseProducts();
                 }
 
             }
