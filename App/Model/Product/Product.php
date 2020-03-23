@@ -21,6 +21,8 @@ use msVendor;
  * @property string $image
  * @property string $vendor
  * @property string $country
+ * @property string $title
+ * @property string $description
  * @property int $parent
  * @property int $price
  * @property int $id
@@ -46,6 +48,8 @@ class Product extends SimpleObject
         'country',
         'options',
         'id',
+        'title',
+        'description',
     ];
 
     /**
@@ -60,7 +64,12 @@ class Product extends SimpleObject
         $name = trim($name);
 
         $price = (int)str_replace(' ', '', trim($this->dom->first('.product-price__main-value')->text()));
-        $content = $this->dom->first('#tab-1 .product-fullinfo__inner .typo')->html();
+        $content = $this->dom->first('#tab-1 .product-fullinfo__inner .typo');
+        if ($content) {
+            $content = $content->html();
+        } else {
+            $content = null;
+        }
 
         $image = $this->dom->first('a.product-photo__item');
         if (!$image) {
@@ -84,16 +93,16 @@ class Product extends SimpleObject
         $options = [];
         if (count($optionsDom)) {
             foreach ($optionsDom as $option) {
-                $name = $option->first('.properties__title .tooltip__label')->text();
-                $value = $option->first('.properties__value')->text();
-                $alias = modResource::filterPathSegment($this->modx, $name);
-                $alias = str_replace([
+                $nameOptions = $option->first('.properties__title .tooltip__label')->text();
+                $valueOptions = $option->first('.properties__value')->text();
+                $aliasOptions = modResource::filterPathSegment($this->modx, $nameOptions);
+                $aliasOptions = str_replace([
                     ',', '.', '-', ' ', '(', ')', '[', ']', '/', '?'
-                ], '_', $alias);
+                ], '_', $aliasOptions);
                 $options[] = [
-                    'name' => $name,
-                    'value' => $value,
-                    'alias' => $alias
+                    'name' => $nameOptions,
+                    'value' => $valueOptions,
+                    'alias' => $aliasOptions
                 ];
             }
 
@@ -115,6 +124,12 @@ class Product extends SimpleObject
         $this->findCountry();
 
         $this->parent = $this->parent ?: 5; //Fix
+        $this->title = $this->dom->first('title')->text();
+        $tvDescription = $this->dom->first('meta[name=description]');
+        if ($tvDescription) {
+            $this->description = $tvDescription;
+        }
+
         $this->saveOptions();
 
         $this->save();
@@ -231,7 +246,9 @@ class Product extends SimpleObject
             'content' => $this->content,
             'price' => $this->price,
             'made_in' => $this->country,
-            'vendor' => $this->vendor
+            'vendor' => $this->vendor,
+            'tv9' => $this->title,
+            'tv10' => $this->description,
         ];
 
         //Установка в товар опций

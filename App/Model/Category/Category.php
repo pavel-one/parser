@@ -15,7 +15,10 @@ use msCategory;
  * @property string $name
  * @property string $image
  * @property string $real_image
+ * @property string $content
  * @property string $parent_name
+ * @property string $title
+ * @property string $description
  * @property array $product_links
  * @property int $id
  * @property int $parent
@@ -37,7 +40,10 @@ class Category extends SimpleObject
         'parent_name',
         'product_links',
         'inner',
-        'dom'
+        'dom',
+        'content',
+        'title',
+        'description'
     ];
 
     /**
@@ -58,7 +64,7 @@ class Category extends SimpleObject
 
         $product = new Product($this->modx, $data);
 
-        $this->inner[] = $product->parse();
+        $product->parse();
 
         return $this;
     }
@@ -70,9 +76,10 @@ class Category extends SimpleObject
     public function parseProducts(): void
     {
         $this->log->info('Запускаю парсинг продуктов');
-        foreach ($this->product_links['links'] as $link) {
+        foreach ($this->product_links['links'] as $key => $link) {
             $this->log->info('Парсю ', ['link' => $link]);
             $this->parseProduct($link);
+            unset($this->product_links['links'][$key]);
         }
     }
 
@@ -107,6 +114,18 @@ class Category extends SimpleObject
         $this->log->info('Начинаю поиск максимального количества страниц в категории', ['link' => $this->link]);
 
         $paginators = $this->dom->find('.content__pagination .paginator__item');
+
+//        $content = null;
+        $content = $this->dom->first('.content__row .typo');
+        if ($content) {
+            $this->content = $content->html();
+        }
+
+        $this->title = $this->dom->first('title')->text();
+        $tvDescription = $this->dom->first('meta[name=description]');
+        if ($tvDescription) {
+            $this->description = $tvDescription;
+        }
 
         if (!count($paginators)) {
             $this->log->error('Пагинация не найдена, ставлю значения по умолчанию', ['link' => $this->link]);
@@ -268,6 +287,7 @@ class Category extends SimpleObject
             'alias' => str_replace('/', '', $this->uri),
             'parent' => $parent,
             'uri' => str_replace('/', '', $this->uri),
+            'content' => $this->content,
         ];
         $defaultData = [
             'type' => 'document',
@@ -305,6 +325,8 @@ class Category extends SimpleObject
         $this->id = $newObject->id;
 
         $newObject->setTVValue('catImg', str_replace(MODX_BASE_PATH, '', $this->real_image));
+        $newObject->setTVValue('seoMetaTitle', $this->title);
+        $newObject->setTVValue('seoMetaDescription', $this->description);
         $newObject->save();
 
         return $this;
