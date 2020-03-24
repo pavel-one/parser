@@ -238,11 +238,25 @@ class Product extends SimpleObject
             'show_in_tree' => 0, //TODO: Change
         ];
 
+
+        $uri = str_replace('/', '', $this->uri);
+        $find2 = $this->modx->getCount('msProduct', [
+            'uri' => $uri
+        ]);
+
+        if ($find2) {
+            $newUri = random_int(0, 100000000000000000);
+            $this->log->info('Такой uri уже есть', [
+                'old' => $uri,
+                'new' => $newUri
+            ]);
+            $uri = $newUri;
+        }
         $data = [
             'pagetitle' => $this->name,
-            'alias' => str_replace('/', '', $this->uri),
+            'alias' => $uri,
             'parent' => $parent,
-            'uri' => str_replace('/', '', $this->uri),
+            'uri' => $uri,
             'content' => $this->content,
             'price' => $this->price,
             'made_in' => $this->country,
