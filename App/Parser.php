@@ -17,18 +17,25 @@ use Monolog\Logger;
 class Parser
 {
     public $links = [
-        'https://split-ovk.com/konditsionirovanie',
-        'https://split-ovk.com/kotly-otopleniia',
-        'https://split-ovk.com/otopitelnoe-oborudovanie',
-        'https://split-ovk.com/vodonagrevateli',
-        'https://split-ovk.com/nasosy',
-        'https://split-ovk.com/ochistka-vozduha',
-        'https://split-ovk.com/ochistka-vody',
-        'https://split-ovk.com/elektro-benzo-instrument',
-        'https://split-ovk.com/kommercheskoe-oborudovanie',
-        'https://split-ovk.com/elektrostantsii',
-        'https://split-ovk.com/stabilizatory-napriazheniia',
-        'https://split-ovk.com/oborudovanie-dlia-blochno-modulnye-kotelnye'
+//        'https://split-ovk.com/konditsionirovanie', //спарсено
+//        'https://split-ovk.com/kotly-otopleniia', //Не до конца
+//        'https://split-ovk.com/otopitelnoe-oborudovanie',
+//        'https://split-ovk.com/vodonagrevateli',
+//        'https://split-ovk.com/nasosy',
+//        'https://split-ovk.com/ochistka-vozduha',
+//        'https://split-ovk.com/ochistka-vody',
+//        'https://split-ovk.com/elektro-benzo-instrument',
+//        'https://split-ovk.com/kommercheskoe-oborudovanie',
+//        'https://split-ovk.com/elektrostantsii',
+//        'https://split-ovk.com/stabilizatory-napriazheniia',
+//        'https://split-ovk.com/oborudovanie-dlia-blochno-modulnye-kotelnye'
+    ];
+
+    public $exclude = [
+//        'https://split-ovk.com/nastennye-gazovye-kotly',
+//        'https://split-ovk.com/napolnye-gazovye-kotly',
+//        'https://split-ovk.com/elektricheskie-vodonagrevateli',
+//        'https://split-ovk.com/elektricheskie-protochnye-vodonagrevateli',
     ];
 
     protected $result = [];
@@ -127,6 +134,12 @@ class Parser
 
         foreach ($elements as $element) {
             $href = $element->first('a')->attr('href');
+
+            if (in_array($href, $this->exclude, true)) {
+                $this->log->notice('Категория в исключениях, пропускаю', ['href' => $href]);
+                continue;
+            }
+
             $categoryData = [
                 'link' => trim($href),
                 'uri' => str_replace('https://split-ovk.com', '', $href),
